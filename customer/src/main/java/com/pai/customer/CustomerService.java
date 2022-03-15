@@ -2,6 +2,8 @@ package com.pai.customer;
 
 import com.pai.clients.fraud.FraudCheckResponse;
 import com.pai.clients.fraud.FraudClient;
+import com.pai.clients.notification.NotificationClient;
+import com.pai.clients.notification.NotificationRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -10,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 @AllArgsConstructor
 public class CustomerService {
     private final CustomerRepository customerRepository;
-    private final RestTemplate restTemplate;
+    private final NotificationClient notificationClient;
     private final FraudClient fraudClient;
     public void registerCustomer(CustomerRegistrationRequest request) {
         Customer customer = Customer.builder().firstName(request.firstName())
@@ -25,6 +27,10 @@ public class CustomerService {
         if (fraudCheckResponse.isFraudster()){
             throw new IllegalStateException("fraudster");
         }
-        // todo: send notification
+        // todo: add to queue and make asynchronous
+        notificationClient.sendNotification(
+            new NotificationRequest(
+                customer.getId(),customer.getEmail(),
+                String.format("Hi %s, welcome to paiservices...",customer.getFirstName())));
     }
 }
